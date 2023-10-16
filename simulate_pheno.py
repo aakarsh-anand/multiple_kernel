@@ -9,7 +9,7 @@ import sys
 def parseargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('--N', required=True, type=int, help='Sample size. Required.')
-    parser.add_argument('--M_range', default=[0, 459792], type=int, required=False, 
+    parser.add_argument('--M_range', default=[0, 459791], type=int, required=False, 
                         help='SNP index range (ex. --M_range 20 35, SNPs with index 20-35 inclusive). Not required.')
     parser.add_argument('--degree', required=True, type=int, help='Degree. Required.')
     parser.add_argument('--sigmas', required=True, nargs='+', type=float, 
