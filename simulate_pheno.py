@@ -9,9 +9,11 @@ import sys
 def parseargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('--N', required=True, type=int, help='Sample size. Required.')
-    parser.add_argument('--M', default=459792, type=int, required=False, help='SNPs. Not required.')
+    parser.add_argument('--M_range', default=[0, 459792], type=int, required=False, 
+                        help='SNP index range (ex. --M_range 20 35, SNPs with index 20-35 inclusive). Not required.')
     parser.add_argument('--degree', required=True, type=int, help='Degree. Required.')
-    parser.add_argument('--sigmas', required=True, nargs='+', type=float, help='Variance components. Required.')
+    parser.add_argument('--sigmas', required=True, nargs='+', type=float, 
+                        help='Variance components (ex. --sigmas 0.2, 0.01, ... 0.1). Required.')
     parser.add_argument('--dir', required=False, default='sim_phenos', help='Directory for output files. Not required.')
     parser.add_argument('--filename', required=False, default='sim', help='Output file name. Not required.')
     args = parser.parse_args()
@@ -38,7 +40,7 @@ if __name__ == "__main__":
     ids2 = pd.read_csv("/u/project/sgss/UKBB/data/cal/filter4.fam",delim_whitespace=True,header=None).iloc[:,1].values
 
     i = np.arange(0, N)
-    snps = np.arange(0, M)
+    snps = np.arange(M[0], M[1]+1)
     bed = open_bed(bedfile)
     X = bed.read(index=np.s_[i,snps])
 
