@@ -56,7 +56,7 @@ if __name__ == "__main__":
     mu = np.zeros(N)
 
     # construct kernels with corresponding components
-    K = sigmas[0] * (np.matmul(X, X.T) / M)
+    K = sigmas[0] * (np.matmul(X, X.T) / (M[1]-M[0]+1))
     I = sigmas[-1] * (np.identity(N))
 
     Q = np.zeros((N, N))
@@ -65,7 +65,7 @@ if __name__ == "__main__":
             poly = PolynomialFeatures((k+2, k+2), interaction_only=True, include_bias=False)
             phi = poly.fit_transform(X)
             nonlinear = np.matmul(phi, phi.T) / phi.shape[1]
-            Q += sigmas[k+1] * nonlinear
+            Q += (sigmas[k+1] * nonlinear)
 
     # draw phenotype from multivariate normal distribution
     y = np.random.multivariate_normal(mu, K + Q + I)
