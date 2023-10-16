@@ -1,74 +1,75 @@
-#%%
-from sklearn.metrics.pairwise import polynomial_kernel
+import argparse
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import PolynomialFeatures
 from bed_reader import open_bed
 import pandas as pd
 import sys
-#%%
-bedfile = "/u/project/sgss/UKBB/data/cal/filter4.bed"
-ids1 = pd.read_csv("/u/project/sgss/UKBB/data/cal/filter4.fam",delim_whitespace=True,header=None).iloc[:,0].values
-ids2 = pd.read_csv("/u/project/sgss/UKBB/data/cal/filter4.fam",delim_whitespace=True,header=None).iloc[:,1].values
-#%%
-N = 5000
-M = 10
 
-i = np.arange(0, N)
-snps = np.arange(0, M)
-#bed = open_bed(bedfile)
-#%%
-#file1 = open(f"/u/home/a/aanand2/multiple_kernel/phenos/temp.pheno", 'a')
-#X = bed.read(index=np.s_[i,snps])
-X = np.random.randint(3, size=(N, M))
+def parseargs():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--N', required=True, type=int, help='Sample size. Required.')
+    parser.add_argument('--M', default=459792, type=int, required=False, help='SNPs. Not required.')
+    parser.add_argument('--degree', required=True, type=int, help='Degree. Required.')
+    parser.add_argument('--sigmas', required=True, nargs='+', type=float, help='Variance components. Required.')
+    parser.add_argument('--dir', required=False, default='sim_phenos', help='Directory for output files. Not required.')
+    parser.add_argument('--filename', required=False, default='sim', help='Output file name. Not required.')
+    args = parser.parse_args()
+    return args
 
-# impute with average value
-col_mean = np.nanmean(X, axis=0)
-inds = np.where(np.isnan(X))
-X[inds] = np.take(col_mean, inds[1])
+if __name__ == "__main__":
 
-idsblock1 = ids1[0:N]
-idsblock2 = ids2[0:N]
-#%%
-scaler = StandardScaler()
-X = scaler.fit_transform(X)
-mask = (X != 0).any(axis=0)
-X = X[:, mask]
-#print(X)
-#%%
-sigma_g = 0.2
-sigma_q = 0.01
-sigma_e = 0.5
+    # parse arguments
+    args = parseargs()
 
-mu = np.zeros(N)
-K = np.matmul(X, X.T) / M
-Q = polynomial_kernel(X, degree=2) / M
-#poly = PolynomialFeatures((2, 2), interaction_only=True, include_bias=False)
-#Q = poly.fit_transform(X) / M
-I = np.identity(N)
+    N = args.N
+    M = args.M
+    degree = args.degree
+    sigmas = args.sigmas
+    directory = args.dir
+    filename = args.filename
 
-#print(K)
-#%%
-y = np.random.multivariate_normal(mu, sigma_g * K + sigma_q * Q + sigma_e * I)
-df = pd.DataFrame(list(zip(idsblock1, idsblock2, y)))
-#df.to_csv(file1, sep=' ', header=["FID", "IID", "pheno"], index=False, mode='w')
-#file1.close()
-# %%
-K2 = np.matmul(K, K.T)
-KQ = np.matmul(K, Q.T)
-QK = np.matmul(Q, K.T)
-Q2 = np.matmul(Q, Q.T)
+    if len(sigmas) != degree + 1:
+        sys.exit("Number of components does not match degree.")
 
-T = [[np.trace(K2), np.trace(KQ), np.trace(K)],
-    [np.trace(QK), np.trace(Q2), np.trace(Q)],
-    [np.trace(K), np.trace(Q), np.trace(I)]]
+    # load genotype matrix
+    bedfile = "/u/project/sgss/UKBB/data/cal/filter4.bed"
+    ids1 = pd.read_csv("/u/project/sgss/UKBB/data/cal/filter4.fam",delim_whitespace=True,header=None).iloc[:,0].values
+    ids2 = pd.read_csv("/u/project/sgss/UKBB/data/cal/filter4.fam",delim_whitespace=True,header=None).iloc[:,1].values
 
-yKy = np.matmul(np.matmul(y.T, K), y)
-yQy = np.matmul(np.matmul(y.T, Q), y)
-yy = np.matmul(y.T, y)
+    i = np.arange(0, N)
+    snps = np.arange(0, M)
+    bed = open_bed(bedfile)
+    X = bed.read(index=np.s_[i,snps])
 
-y = [yKy, yQy, yy]
-#%%
-sigma = np.linalg.solve(T, y)
-print(sigma)
-# %%
+    # impute with average value
+    col_mean = np.nanmean(X, axis=0)
+    inds = np.where(np.isnan(X))
+    X[inds] = np.take(col_mean, inds[1])
+
+    # standardize genotype matrix
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+
+    mu = np.zeros(N)
+
+    # construct kernels with corresponding components
+    K = sigmas[0] * (np.matmul(X, X.T) / M)
+    I = sigmas[-1] * (np.identity(N))
+
+    Q = np.zeros((N, N))
+    if degree > 1:
+        for k in range(degree-1):
+            poly = PolynomialFeatures((k+2, k+2), interaction_only=True, include_bias=False)
+            phi = poly.fit_transform(X)
+            nonlinear = np.matmul(phi, phi.T) / phi.shape[1]
+            Q += sigmas[k+1] * nonlinear
+
+    # draw phenotype from multivariate normal distribution
+    y = np.random.multivariate_normal(mu, K + Q + I)
+    ids1 = ids1[0:N]
+    ids2 = ids2[0:N]
+
+    # save phenotype to file
+    df = pd.DataFrame(list(zip(ids1, ids2, y)))
+    df.to_csv(directory + '/' + filename, sep=' ', header=["FID", "IID", "pheno"], index=False, mode='w')
