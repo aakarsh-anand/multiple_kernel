@@ -8,9 +8,9 @@ from bed_reader import open_bed
 def parseargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gen', required=True, type=str, help='bed/bim/fam prefix. Required.')
-    parser.add_argument('--phen', default=459792, type=str, required=False, help='Phenotype file. Required.')
-    parser.add_argument('--mStart', required=True, type=int, help='Start SNP. Required. Must be less than End SNP')
-    parser.add_argument('--mEnd', required=True, type=int, help='End SNP. Required. Must be greater than Start SNP')
+    parser.add_argument('--phen', required=True, type=str, help='Phenotype file. Required.')
+    parser.add_argument('--snp_range', required=True, type=int, 
+                        help='SNP index range (ex. --M_range 20 35, SNPs with index 20-35 inclusive). Required.') 
     parser.add_argument('--degree', required=True, type=int, help='Degree. Required.')
     parser.add_argument('--dir', required=False, default='mult_kernel_results', help='Directory for output files. Not required.')
     parser.add_argument('--filename', required=False, default='out', help='Output file name. Not required.')
@@ -36,8 +36,7 @@ if __name__ == "__main__":
 
     gen = args.gen
     phen = args.phen
-    mStart = args.mStart
-    mEnd = args.mEnd
+    snp_range = args.snp_range
     D = args.degree
     dir = args.dir
     filename = args.filename
@@ -49,7 +48,7 @@ if __name__ == "__main__":
     # create X and y
     phen_values = phendata.iloc[:,-1].values
     N = len(phen_values)
-    X = gendata.read(index=np.s_[0:N, mStart:mEnd])
+    X = gendata.read(index=np.s_[0:N, snp_range[0]:snp_range[1]+1])
     
     # filter NaN
     nanfilter=~np.isnan(X).any(axis=1)
@@ -84,7 +83,7 @@ if __name__ == "__main__":
     T.append(np.full(D+1, N))
 
     # Exact Version
-    
+
     # K = np.matmul(X, X.T) / X.shape[1]
     # poly = PolynomialFeatures(degree=(2, 2), interaction_only=True, include_bias=False)
     # phi = poly.fit_transform(X)
