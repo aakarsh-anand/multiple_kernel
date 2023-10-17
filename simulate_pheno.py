@@ -9,8 +9,8 @@ import sys
 def parseargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('--N', required=True, type=int, help='Sample size. Required.')
-    parser.add_argument('--M_range', default=[0, 459791], type=int, required=False, 
-                        help='SNP index range (ex. --M_range 20 35, SNPs with index 20-35 inclusive). Not required.')
+    parser.add_argument('--snp_range', nargs='+', default=[0, 459791], type=int, required=False, 
+                        help='SNP index range (ex. --snp_range 20 35, SNPs with index 20-35 inclusive). Not required.')
     parser.add_argument('--degree', required=True, type=int, help='Degree. Required.')
     parser.add_argument('--sigmas', required=True, nargs='+', type=float, 
                         help='Variance components (ex. --sigmas 0.2, 0.01, ... 0.1). Required.')
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     args = parseargs()
 
     N = args.N
-    M = args.M
+    M = args.snp_range
     degree = args.degree
     sigmas = args.sigmas
     directory = args.dir

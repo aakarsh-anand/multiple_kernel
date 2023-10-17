@@ -9,7 +9,7 @@ def parseargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gen', required=True, type=str, help='bed/bim/fam prefix. Required.')
     parser.add_argument('--phen', required=True, type=str, help='Phenotype file. Required.')
-    parser.add_argument('--snp_range', required=True, type=int, 
+    parser.add_argument('--snp_range', nargs='+', required=True, type=int, 
                         help='SNP index range (ex. --M_range 20 35, SNPs with index 20-35 inclusive). Required.') 
     parser.add_argument('--degree', required=True, type=int, help='Degree. Required.')
     parser.add_argument('--dir', required=False, default='mult_kernel_results', help='Directory for output files. Not required.')
