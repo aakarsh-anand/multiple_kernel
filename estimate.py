@@ -108,12 +108,12 @@ if __name__ == "__main__":
         perm_vals[f"sigma_{d}"].append(original[d-1])
     perm_vals["sigma_e"] = []
     perm_vals["sigma_e"].append(original[D])
-    for i in range(1000):
-        y_perm = np.random.permutation(y)
-        vals = np.linalg.solve(T, y_perm)
-        for d in range(1, D+1):
-            perm_vals[f"sigma_{d}"].append(vals[d-1])
-        perm_vals["sigma_e"].append(vals[D])
+    # for i in range(1000):
+    #     y_perm = np.random.permutation(y)
+    #     vals = np.linalg.solve(T, y_perm)
+    #     for d in range(1, D+1):
+    #         perm_vals[f"sigma_{d}"].append(vals[d-1])
+    #     perm_vals["sigma_e"].append(vals[D])
     data = pd.DataFrame(perm_vals)
     data.to_csv(outfile, index=False)
     outfile.close()
