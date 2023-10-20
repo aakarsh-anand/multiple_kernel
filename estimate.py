@@ -19,7 +19,7 @@ def parseargs():
     args = parser.parse_args()
     return args
 
-def estimate_trace(X1, X2, B=50):
+def estimate_trace(X1, X2, B=10):
     M1 = X1.shape[1]
     M2 = X2.shape[1]
     n = X1.shape[0]
