@@ -4,11 +4,13 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import PolynomialFeatures
 from bed_reader import open_bed
+from scipy.linalg import pinvh
 
 def parseargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gen', required=True, type=str, help='bed/bim/fam prefix. Required.')
     parser.add_argument('--phen', required=True, type=str, help='Phenotype file. Required.')
+    parser.add_argument('--covar', required=False, type=str, help='Covariate file. Not required.')
     parser.add_argument('--snp_range', nargs='+', required=True, type=int, 
                         help='SNP index range (ex. --M_range 20 35, SNPs with index 20-35 inclusive). Required.') 
     parser.add_argument('--degree', required=True, type=int, help='Degree. Required.')
@@ -21,13 +23,17 @@ def estimate_trace(X1, X2, B=50):
     M1 = X1.shape[1]
     M2 = X2.shape[1]
     n = X1.shape[0]
-    vectors = np.random.multivariate_normal(np.zeros(n), np.identity(n), size=B)
 
     tot = 0
-    for z in vectors:
+    for i in range(B):
+        z = np.random.normal(0, 1, size=n)
         tot += np.matmul(np.matmul(np.matmul(np.matmul(np.matmul(z.T, X1), X1.T), X2), X2.T), z)
 
     return (1/(B*M1*M2))*tot
+
+def ols(X, y):
+    P1 = pinvh(X.T@X)
+    return P1@(X.T@y)
 
 if __name__ == "__main__":
 
@@ -36,6 +42,7 @@ if __name__ == "__main__":
 
     gen = args.gen
     phen = args.phen
+    covar = args.covar
     snp_range = args.snp_range
     D = args.degree
     dir = args.dir
@@ -45,19 +52,36 @@ if __name__ == "__main__":
     gendata = open_bed(f"{gen}.bed")
     phendata = pd.read_csv(phen, delim_whitespace=True)
 
+    c = np.array([])
+    if covar != None:
+        c = pd.read_csv(covar,delim_whitespace=True)
+        c = c.iloc[:,2:]
+        c = c.to_numpy()
+
     # create X and y
     phen_values = phendata.iloc[:,-1].values
     N = len(phen_values)
     X = gendata.read(index=np.s_[0:N, snp_range[0]:snp_range[1]+1])
     
     # filter NaN
-    nanfilter=~np.isnan(X).any(axis=1)
+    nanfilter1=~np.isnan(X).any(axis=1)
+    nanfilter2=~np.isnan(c).any(axis=1)
+    nanfilter=nanfilter1&nanfilter2
+
     X = X[nanfilter]
     phen_values = phen_values[nanfilter]
 
     # standardize genotype
     scaler = StandardScaler()
+    X = np.unique(X, axis=1, return_index=False)
     X = scaler.fit_transform(X)
+    
+    # repeat steps if covar is given and regress PCs
+    if c.size != 0:
+        c = c[nanfilter]
+        c = np.unique(c, axis=1, return_index=False)
+        c = scaler.fit_transform(c)
+        phen_values -= np.matmul(c, ols(c, phen_values))
 
     # create kernel matrices and phenos
     kernel_matrices = [X]
