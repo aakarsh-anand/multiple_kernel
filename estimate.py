@@ -81,6 +81,7 @@ if __name__ == "__main__":
         c = c[nanfilter]
         c = np.unique(c, axis=1, return_index=False)
         c = scaler.fit_transform(c)
+        c = np.concatenate((np.ones((c.shape[0],1)),c),axis=1)
         phen_values -= np.matmul(c, ols(c, phen_values))
 
     # create kernel matrices and phenos
