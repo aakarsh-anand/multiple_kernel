@@ -67,8 +67,11 @@ if __name__ == "__main__":
     
     # filter NaN
     nanfilter1=~np.isnan(X).any(axis=1)
-    nanfilter2=~np.isnan(c).any(axis=1)
-    nanfilter=nanfilter1&nanfilter2
+    if covar != None:
+        nanfilter2=~np.isnan(c).any(axis=1)
+        nanfilter=nanfilter1&nanfilter2
+    else:
+        nanfilter=nanfilter1
 
     X = X[nanfilter]
     phen_values = phen_values[nanfilter]
