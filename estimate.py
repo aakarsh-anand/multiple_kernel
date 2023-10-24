@@ -14,12 +14,13 @@ def parseargs():
     parser.add_argument('--snp_range', nargs='+', required=True, type=int, 
                         help='SNP index range (ex. --M_range 20 35, SNPs with index 20-35 inclusive). Required.') 
     parser.add_argument('--degree', required=True, type=int, help='Degree. Required.')
+    parser.add_argument('--B', required=False, default=50, type=int, help='Number of random vectors for trace approximation. Not Required.')
     parser.add_argument('--dir', required=False, default='mult_kernel_results', help='Directory for output files. Not required.')
     parser.add_argument('--filename', required=False, default='out', help='Output file name. Not required.')
     args = parser.parse_args()
     return args
 
-def estimate_trace(X1, X2, B=10):
+def estimate_trace(X1, X2, B):
     M1 = X1.shape[1]
     M2 = X2.shape[1]
     n = X1.shape[0]
@@ -45,6 +46,7 @@ if __name__ == "__main__":
     covar = args.covar
     snp_range = args.snp_range
     D = args.degree
+    B = args.B
     dir = args.dir
     filename = args.filename
 
@@ -102,7 +104,7 @@ if __name__ == "__main__":
     for i in range(D):
         row = []
         for j in range(D):
-            row.append(estimate_trace(kernel_matrices[i], kernel_matrices[j]))
+            row.append(estimate_trace(kernel_matrices[i], kernel_matrices[j], B))
         row.append(N)
         T.append(row)
     T.append(np.full(D+1, N))
