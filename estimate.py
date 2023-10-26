@@ -95,6 +95,7 @@ if __name__ == "__main__":
     for d in range(2, D+1):
         poly = PolynomialFeatures(degree=(d, d), interaction_only=True, include_bias=False)
         phi = poly.fit_transform(X)
+        phi = scaler.fit_transform(phi)
         new_pheno = np.matmul(np.matmul(np.matmul(phen_values.T, phi), phi.T), phen_values) / phi.shape[1]
 
         kernel_matrices.append(phi)
