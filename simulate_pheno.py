@@ -12,6 +12,7 @@ def parseargs():
     parser.add_argument('--snp_range', nargs='+', default=[0, 459791], type=int, required=False, 
                         help='SNP index range (ex. --snp_range 20 35, SNPs with index 20-35 inclusive). Not required.')
     parser.add_argument('--degree', required=True, type=int, help='Degree. Required.')
+    parser.add_argument('--use', required=False, nargs='+', default=None, type=int, help='Degrees to use. Not required.')
     parser.add_argument('--sigmas', required=True, nargs='+', type=float, 
                         help='Variance components (ex. --sigmas 0.2, 0.01, ... 0.1). Required.')
     parser.add_argument('--dir', required=False, default='sim_phenos', help='Directory for output files. Not required.')
@@ -27,12 +28,18 @@ if __name__ == "__main__":
     N = args.N
     M = args.snp_range
     degree = args.degree
+    use = args.use
+    if use == None:
+        use = range(1, degree+1)
     sigmas = args.sigmas
     directory = args.dir
     filename = args.filename
 
     if len(sigmas) != degree + 1:
         sys.exit("Number of components does not match degree.")
+    
+    if use[-1] > degree:
+        sys.exit("Use does not match degree.")
 
     # load genotype matrix
     bedfile = "/u/project/sgss/UKBB/data/cal/filter4.bed"
@@ -64,11 +71,16 @@ if __name__ == "__main__":
         for k in range(degree-1):
             poly = PolynomialFeatures((k+2, k+2), interaction_only=True, include_bias=False)
             phi = poly.fit_transform(X)
+            phi = scaler.fit_transform(phi)
             nonlinear = np.matmul(phi, phi.T) / phi.shape[1]
-            Q += (sigmas[k+1] * nonlinear)
+            if (k+2) in use:
+                Q += (sigmas[k+1] * nonlinear)
 
     # draw phenotype from multivariate normal distribution
-    y = np.random.multivariate_normal(mu, K + Q + I)
+    if 1 not in use:
+        y = np.random.multivariate_normal(mu, Q + I)
+    else:
+        y = np.random.multivariate_normal(mu, K + Q + I)
     ids1 = ids1[0:N]
     ids2 = ids2[0:N]
 
