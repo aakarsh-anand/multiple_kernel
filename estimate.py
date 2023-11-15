@@ -53,17 +53,21 @@ if __name__ == "__main__":
     # read data
     gendata = open_bed(f"{gen}.bed")
     phendata = pd.read_csv(phen, delim_whitespace=True)
+    phen_values = phendata.iloc[:,-1].values
+    yfilter = (phen_values != -9) & (~np.isnan(phen_values))
+    phen_values = phen_values[yfilter]
 
     c = np.array([])
     if covar != None:
         c = pd.read_csv(covar,delim_whitespace=True)
         c = c.iloc[:,2:]
         c = c.to_numpy()
+        c = c[yfilter]
 
     # create X and y
-    phen_values = phendata.iloc[:,-1].values
+    
     N = len(phen_values)
-    X = gendata.read(index=np.s_[0:N, snp_range[0]:snp_range[1]+1])
+    X = gendata.read(index=np.s_[yfilter, snp_range[0]:snp_range[1]+1])
     
     # filter NaN
     nanfilter1=~np.isnan(X).any(axis=1)
@@ -87,7 +91,8 @@ if __name__ == "__main__":
         c = np.unique(c, axis=1, return_index=False)
         c = scaler.fit_transform(c)
         c = np.concatenate((np.ones((c.shape[0],1)),c),axis=1)
-        phen_values -= np.matmul(c, ols(c, phen_values))
+        o = ols(c, phen_values)
+        phen_values -= np.matmul(c, o)
 
     # create kernel matrices and phenos
     kernel_matrices = [X]
