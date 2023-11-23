@@ -6,6 +6,7 @@ from bed_reader import open_bed
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
 from scipy.stats import pearsonr
+import os
 
 def parseargs():
     parser = argparse.ArgumentParser()
@@ -38,6 +39,13 @@ if __name__ == "__main__":
     covar = args.covar
     dir = args.dir
     filename = args.filename
+
+    if os.stat(snplist).st_size == 0:
+        with open(f"{dir}/{filename}", "w") as f:
+            f.write(f"Trait: {phen}\n")
+            f.write(f"MSE: 0\n")
+            f.write(f"Pearson: 0")
+        exit()
 
     # read data
     gendata = open_bed(f"{gen}.bed")
