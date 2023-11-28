@@ -5,6 +5,7 @@ from scipy.linalg import pinvh
 from bed_reader import open_bed
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
 from scipy.stats import pearsonr
 import os
 
@@ -77,24 +78,35 @@ if __name__ == "__main__":
     X = X[nanfilter]
     phen_values = phen_values[nanfilter]
 
+    if len(c) != 0:
+        X_train, X_test, y_train, y_test, c_train, c_test = train_test_split(X, phen_values, c, test_size=0.3, random_state=42)
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(X, phen_values, test_size=0.3, random_state=42)
+
     # standardize genotype
     scaler = StandardScaler()
-    X = np.unique(X, axis=1, return_index=False)
-    X = scaler.fit_transform(X)
+    #X_train = np.unique(X_train, axis=1, return_index=False)
+    #X_test = np.unique(X_test, axis=1, return_index=False)
+    X_train_scale = scaler.fit_transform(X_train)
+    X_test_scale = scaler.transform(X_test)
 
     if c.size != 0:
         c = c[nanfilter]
         c = np.unique(c, axis=1, return_index=False)
         c = scaler.fit_transform(c)
         c = np.concatenate((np.ones((c.shape[0],1)),c),axis=1)
-        o = ols(c, phen_values)
-        phen_values -= np.matmul(c, o)
 
-    OLS = ols(X, phen_values)
-    y_pred = np.matmul(X, OLS)
+        o_train = ols(c_train, y_train)
+        y_train -= np.matmul(c, o_train)
 
-    mse = mean_squared_error(phen_values, y_pred)
-    pearson = pearsonr(y_pred, phen_values)
+        o_test = ols(c_test, y_test)
+        y_test -= np.matmul(c, o_test)
+
+    OLS_train = ols(X_train_scale, y_train)
+    y_pred = np.matmul(X_test_scale, OLS_train)
+
+    mse = mean_squared_error(y_test, y_pred)
+    pearson = pearsonr(y_test, y_pred)
     print(f"MSE: {mse}")
     print(f"Pearson: {pearson.statistic}")
 
