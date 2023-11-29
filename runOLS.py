@@ -102,6 +102,9 @@ if __name__ == "__main__":
         o_test = ols(c_test, y_test)
         y_test -= np.matmul(c, o_test)
 
+    X_train_scale = np.concatenate((np.ones((X_train_scale.shape[0],1)),X_train_scale),axis=1)
+    X_test_scale = np.concatenate((np.ones((X_test_scale.shape[0],1)),X_test_scale),axis=1)
+
     OLS_train = ols(X_train_scale, y_train)
     y_pred = np.matmul(X_test_scale, OLS_train)
 
