@@ -53,8 +53,24 @@ if __name__ == "__main__":
     # read data
     gendata = open_bed(f"{gen}.bed")
     phendata = pd.read_csv(phen, delim_whitespace=True)
+    fid = phendata.iloc[:, 0].values
+    iid = phendata.iloc[:, 1].values
     phen_values = phendata.iloc[:,-1].values
-    yfilter = (phen_values != -9) & (~np.isnan(phen_values))
+
+    yfilter = np.array([])
+    fam = pd.read_csv(f"{gen}.fam", delim_whitespace=True, header=None)
+    fid_all = fam.iloc[:,0].values
+    iid_all = fam.iloc[:,1].values
+    for i in range(len(fid)):
+        idx1 = np.where(fid_all == fid[i])[0]
+        idx2 = np.where(iid_all == iid[i])[0]
+        if idx1 == idx2:
+            yfilter = np.append(yfilter, i)
+            
+    idx = (phen_values != -9) & (~np.isnan(phen_values))
+    yfilter = yfilter[idx]
+    yfilter = [int(x) for x in yfilter]
+
     phen_values = phen_values[yfilter]
 
     c = np.array([])
