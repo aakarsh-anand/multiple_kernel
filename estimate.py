@@ -82,7 +82,6 @@ if __name__ == "__main__":
 
     # create X and y
     
-    N = len(phen_values)
     X = gendata.read(index=np.s_[yfilter, snp_range[0]:snp_range[1]+1])
     
     # filter NaN
@@ -96,6 +95,8 @@ if __name__ == "__main__":
     X = X[nanfilter]
     phen_values = phen_values[nanfilter]
 
+    N = len(phen_values)
+    
     # standardize genotype
     scaler = StandardScaler()
     X = np.unique(X, axis=1, return_index=False)
