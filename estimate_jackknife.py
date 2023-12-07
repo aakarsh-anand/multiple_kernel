@@ -186,7 +186,7 @@ if __name__ == "__main__":
     
     vals.columns = ["obs", "mean", "std"]
     vals['pvalue'] = vals.apply(lambda row: 2*(1 - stats.norm.cdf(np.abs((row["obs"] - row["mean"]) / row["std"]))), axis=1)
-    print(vals)
+
     outfile = open(f"{dir}/{filename}", 'w')
     vals.to_csv(outfile, index=True)
     outfile.close()
