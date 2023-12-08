@@ -179,13 +179,14 @@ if __name__ == "__main__":
     # Compute mean and std for each column
     column_stats = pd.DataFrame({
         'mean': df.iloc[:J, :].mean(),
-        'std': df.iloc[:J, :].std()
+        'var': df.iloc[:J, :].var() * (((J-1)**2)/J)
     })
 
     vals = pd.concat([df.iloc[J, :], column_stats], axis=1)
     
-    vals.columns = ["obs", "mean", "std"]
-    vals['pvalue'] = vals.apply(lambda row: 2*(1 - stats.norm.cdf(np.abs((row["obs"] - row["mean"]) / row["std"]))), axis=1)
+    vals.columns = ["obs", "mean", "var"]
+    vals['wald'] = vals.apply(lambda row: row["mean"]**2/row["var"], axis=1)
+    vals['pvalue'] = vals.apply(lambda row: (1 - stats.chi2.cdf(row["wald"], 1)), axis=1)
 
     outfile = open(f"{dir}/{filename}", 'w')
     vals.to_csv(outfile, index=True)
