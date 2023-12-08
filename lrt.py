@@ -75,7 +75,7 @@ if __name__ == "__main__":
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
 
-    s1 = d1["mean"].values
+    s1 = d1.iloc[0,:].values
     s3 = d3.iloc[0,:].values
     s1[s1<0]=0
     s3[s3<0]=0
