@@ -186,7 +186,7 @@ if __name__ == "__main__":
     
     vals.columns = ["obs", "mean", "std"]
     vals['z'] = vals.apply(lambda row: row["mean"]/row["std"], axis=1)
-    vals['pvalue'] = vals.apply(lambda row: 2*(1 - stats.norm.cdf(row["z"], 1)), axis=1)
+    vals['pvalue'] = vals.apply(lambda row: 1 - stats.norm.cdf(row["z"]), axis=1)
 
     outfile = open(f"{dir}/{filename}", 'w')
     vals.to_csv(outfile, index=True)
