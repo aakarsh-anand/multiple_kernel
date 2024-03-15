@@ -8,6 +8,11 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from scipy.stats import pearsonr
 import os
+from sklearn.neural_network import MLPRegressor
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.svm import LinearSVR
 
 def parseargs():
     parser = argparse.ArgumentParser()
@@ -79,32 +84,35 @@ if __name__ == "__main__":
     phen_values = phen_values[nanfilter]
 
     if len(c) != 0:
+        c = c[nanfilter]
         X_train, X_test, y_train, y_test, c_train, c_test = train_test_split(X, phen_values, c, test_size=0.3, random_state=42)
     else:
         X_train, X_test, y_train, y_test = train_test_split(X, phen_values, test_size=0.3, random_state=42)
 
     # standardize genotype
     scaler = StandardScaler()
-    #X_train = np.unique(X_train, axis=1, return_index=False)
-    #X_test = np.unique(X_test, axis=1, return_index=False)
+    X_train = np.unique(X_train, axis=1, return_index=False)
+    X_test = np.unique(X_test, axis=1, return_index=False)
     X_train_scale = scaler.fit_transform(X_train)
     X_test_scale = scaler.transform(X_test)
 
     if c.size != 0:
-        c = c[nanfilter]
-        c = np.unique(c, axis=1, return_index=False)
-        c = scaler.fit_transform(c)
-        c = np.concatenate((np.ones((c.shape[0],1)),c),axis=1)
+        c_train = np.unique(c_train, axis=1, return_index=False)
+        c_train = scaler.fit_transform(c_train)
+        c_train = np.concatenate((np.ones((c_train.shape[0],1)),c_train),axis=1)
+        c_test = np.unique(c_test, axis=1, return_index=False)
+        c_test = scaler.fit_transform(c_test)
+        c_test = np.concatenate((np.ones((c_test.shape[0],1)),c_test),axis=1)
 
         o_train = ols(c_train, y_train)
-        y_train -= np.matmul(c, o_train)
+        y_train -= np.matmul(c_train, o_train)
 
         o_test = ols(c_test, y_test)
-        y_test -= np.matmul(c, o_test)
+        y_test -= np.matmul(c_test, o_test)
 
     X_train_scale = np.concatenate((np.ones((X_train_scale.shape[0],1)),X_train_scale),axis=1)
     X_test_scale = np.concatenate((np.ones((X_test_scale.shape[0],1)),X_test_scale),axis=1)
-
+    
     OLS_train = ols(X_train_scale, y_train)
     y_pred = np.matmul(X_test_scale, OLS_train)
 
@@ -116,4 +124,26 @@ if __name__ == "__main__":
     with open(f"{dir}/{filename}", "w") as f:
         f.write(f"Trait: {phen}\n")
         f.write(f"MSE: {mse}\n")
+        f.write(f"Pearson: {pearson.statistic}")
+
+    poly = PolynomialFeatures(2)
+    X_train_scale = poly.fit_transform(X_train)
+    X_test_scale = poly.fit_transform(X_test)
+
+    scaler = StandardScaler()
+
+    X_train_scale = scaler.fit_transform(X_train_scale)
+    X_test_scale = scaler.transform(X_test_scale)
+
+    svc = LinearSVR(max_iter=10000, fit_intercept=False, random_state=1)
+    svc.fit(X_train_scale, y_train)
+    y_pred = svc.predict(X_test_scale)
+
+    mse = mean_squared_error(y_test, y_pred)
+    pearson = pearsonr(y_test, y_pred)
+    print(f"MSE: {mse}")
+    print(f"Pearson: {pearson.statistic}")
+
+    with open(f"{dir}/{filename}", "a") as f:
+        f.write(f"\nMSE: {mse}\n")
         f.write(f"Pearson: {pearson.statistic}")
