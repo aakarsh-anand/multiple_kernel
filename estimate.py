@@ -115,7 +115,7 @@ if __name__ == "__main__":
     kernel_matrices = [X]
     y = [np.matmul(np.matmul(np.matmul(phen_values.T, X), X.T), phen_values) / X.shape[1]]
     for d in range(2, D+1):
-        poly = PolynomialFeatures(degree=(d, d), interaction_only=True, include_bias=False)
+        poly = PolynomialFeatures(degree=(d, d), interaction_only=False, include_bias=False)
         phi = poly.fit_transform(X)
         phi = scaler.fit_transform(phi)
         new_pheno = np.matmul(np.matmul(np.matmul(phen_values.T, phi), phi.T), phen_values) / phi.shape[1]
