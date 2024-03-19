@@ -8,11 +8,6 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from scipy.stats import pearsonr
 import os
-from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
-from sklearn.kernel_ridge import KernelRidge
-from sklearn.svm import LinearSVR
 
 def parseargs():
     parser = argparse.ArgumentParser()
@@ -124,26 +119,4 @@ if __name__ == "__main__":
     with open(f"{dir}/{filename}", "w") as f:
         f.write(f"Trait: {phen}\n")
         f.write(f"MSE: {mse}\n")
-        f.write(f"Pearson: {pearson.statistic}")
-
-    poly = PolynomialFeatures(2)
-    X_train_scale = poly.fit_transform(X_train)
-    X_test_scale = poly.fit_transform(X_test)
-
-    scaler = StandardScaler()
-
-    X_train_scale = scaler.fit_transform(X_train_scale)
-    X_test_scale = scaler.transform(X_test_scale)
-
-    svc = LinearSVR(max_iter=10000, fit_intercept=False, random_state=1)
-    svc.fit(X_train_scale, y_train)
-    y_pred = svc.predict(X_test_scale)
-
-    mse = mean_squared_error(y_test, y_pred)
-    pearson = pearsonr(y_test, y_pred)
-    print(f"MSE: {mse}")
-    print(f"Pearson: {pearson.statistic}")
-
-    with open(f"{dir}/{filename}", "a") as f:
-        f.write(f"\nMSE: {mse}\n")
         f.write(f"Pearson: {pearson.statistic}")
