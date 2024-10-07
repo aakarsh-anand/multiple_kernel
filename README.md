@@ -1,7 +1,3 @@
-# multiple_kernel
-
-# Prateek joined the project.
-
-# Test commit.
-
-# Test commit 2.
+# Kernel Separation (WIP)
+Application of randomized HE regression to efficiently fit multiple kernels to biobank data.
+This work aims to separate the linear effects from higher order interactions between SNPs.
